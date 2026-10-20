@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#1a4d36" />
+		<title>EduPeer | Student & Peer Feedback Management System</title>
+		<meta name="description" content="A student feedback and peer evaluation platform powered by MongoDB." />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="style.css" />
+		<script src="script.js" defer></script>
+	</head>
+	<body>
+		<!-- AUTH SCREEN -->
+		<main id="auth-view" class="auth-layout">
+			<section class="auth-intro" aria-label="EduPeer Introduction">
+				<a class="brand" href="#" aria-label="EduPeer home">
+					<span class="brand-mark" aria-hidden="true">E</span>
+					<span>EduPeer</span>
+				</a>
+				<div class="intro-copy">
+					<span class="eyebrow">ACADEMIC PEER EVALUATION SYSTEM</span>
+					<h1>Empower your<br />classroom<br /><em>together.</em></h1>
+					<p>Evaluate your classmates across 5 core dimensions, share constructive peer feedback.</p>
+				</div>
+				<div class="intro-note">
+					<span class="note-dot"></span>
+					Classroom Peer Review & Feedback Portal
+				</div>
+			</section>
+
+			<section class="auth-main">
+				<div class="auth-card">
+					<div class="mobile-brand brand">
+						<span class="brand-mark" aria-hidden="true">E</span>
+						<span>EduPeer</span>
+					</div>
+					<div class="auth-heading">
+						<span class="eyebrow" id="auth-eyebrow">SECURE LOGIN</span>
+						<h2 id="auth-title">Sign in to your account</h2>
+						<p id="auth-subtitle">Access the student feedback system and evaluate your classmates.</p>
+					</div>
+
+					<form id="auth-form" class="form-stack">
+						<label id="name-field" class="field" hidden>
+							<span>Full name</span>
+							<input id="full-name" type="text" autocomplete="name" placeholder="Enter your full name" />
+						</label>
+						<label class="field">
+							<span>Email address</span>
+							<input id="email" type="email" autocomplete="email" placeholder="you@college.edu" required />
+						</label>
+						<label class="field">
+							<span>Password</span>
+							<input id="password" type="password" autocomplete="current-password" placeholder="Enter password (min 6 chars)" minlength="6" required />
+						</label>
+						<button id="auth-submit" class="button button-primary button-wide" type="submit">
+							Sign in <span aria-hidden="true">→</span>
+						</button>
+					</form>
+
+					<p id="auth-message" class="form-message" role="status" aria-live="polite"></p>
+
+					<p class="auth-switch">
+						<span id="auth-switch-label">New to EduPeer?</span>
+						<button id="auth-switch" class="text-button" type="button">Create student account</button>
+					</p>
+				</div>
+				<p class="auth-footer">Student Feedback Management System</p>
+			</section>
+		</main>
+
+		<!-- MAIN APP WORKSPACE -->
+		<main id="app-view" class="app-layout" hidden>
+			<!-- SIDEBAR NAVIGATION -->
+			<aside class="sidebar">
+				<a class="brand" href="#" aria-label="EduPeer dashboard">
+					<span class="brand-mark" aria-hidden="true">E</span>
+					<span>EduPeer</span>
+				</a>
+
+				<div class="sidebar-section">
+					<div class="sidebar-label">PEER EVALUATION</div>
+					<nav class="sidebar-nav">
+						<!-- Student View Navigation -->
+						<button id="nav-peer-students" class="nav-item nav-item-active student-nav-item" type="button">
+							<span class="nav-icon" aria-hidden="true">👥</span>
+							<span>Classmates</span>
+							<span id="nav-peer-count" class="nav-count">62</span>
+						</button>
+						<button id="nav-my-reviews" class="nav-item student-nav-item" type="button">
+							<span class="nav-icon" aria-hidden="true">📝</span>
+							<span>My Given Reviews</span>
+							<span id="nav-my-reviews-count" class="nav-count">0</span>
+						</button>
+
+						<!-- Admin View Navigation (Visible to Admin only) -->
+						<button id="nav-admin-analytics" class="nav-item nav-admin-item" type="button" hidden>
+							<span class="nav-icon" aria-hidden="true">📊</span>
+							<span>Class Analytics</span>
+						</button>
+						<button id="nav-admin-all-feedbacks" class="nav-item nav-admin-item" type="button" hidden>
+							<span class="nav-icon" aria-hidden="true">📋</span>
+							<span>All Peer Submissions</span>
+							<span id="nav-admin-feedbacks-count" class="nav-count">0</span>
+						</button>
+
+						<!-- Course Feedback Nav Item -->
+						<div class="sidebar-label student-nav-item" style="margin-top: 14px;">COURSE & SUBJECTS</div>
+						<button id="nav-course-feedback" class="nav-item student-nav-item" type="button">
+							<span class="nav-icon" aria-hidden="true">🎓</span>
+							<span>Course Feedback</span>
+							<span id="nav-course-count" class="nav-count">0</span>
+						</button>
+					</nav>
+				</div>
+
+				<div class="sidebar-bottom">
+					<div class="profile-chip">
+						<span id="avatar" class="avatar">G</span>
+						<div class="profile-copy">
+							<strong id="profile-name">Student</strong>
+							<span id="profile-role" class="badge-role">Student</span>
+						</div>
+					</div>
+					<button id="sign-out" class="button button-quiet button-wide" type="button">
+						<span aria-hidden="true">↗</span> Sign out
+					</button>
+				</div>
+			</aside>
+
+			<!-- MAIN CONTENT AREA -->
+			<section class="workspace">
+				<!-- TOPBAR -->
+				<header class="topbar">
+					<div class="breadcrumb" id="main-breadcrumb">
+						Workspace <span>/</span> <strong id="breadcrumb-current">Classmates Roster</strong>
+					</div>
+					<div class="topbar-right">
+						<span class="role-pill" id="topbar-role-badge">Student</span>
+						<span id="topbar-date"></span>
+					</div>
+				</header>
+
+				<div class="page-content">
+					<!-- NOTIFICATION TOAST -->
+					<div id="toast-message" class="toast" role="status" aria-live="polite" hidden></div>
+
+					<!-- VIEW 1: CLASSMATES PEER FEEDBACK (STUDENT PRIMARY) -->
+					<section id="view-peer-students" class="workspace-view">
+						<div class="page-heading">
+							<div>
+								<h1>Give Feedback for Students</h1>
+								<p>Select any classmate from our class roster below to evaluate their performance across 5 key dimensions (1 to 5 rating scale).</p>
+							</div>
+							<div class="heading-actions">
+								<span class="status-summary-chip" id="student-progress-chip">
+									<strong id="reviewed-ratio">0 / 62</strong> Reviewed
+								</span>
+							</div>
+						</div>
+
+						<!-- PROGRESS BANNER -->
+						<div class="peer-progress-card">
+							<div class="progress-info">
+								<div>
+									<h3>Your Peer Review Progress</h3>
+									<p id="progress-text">You have submitted feedback for 0 of 62 classmates.</p>
+								</div>
+								<div class="progress-metric">
+									<span id="progress-percentage">0%</span>
+									<small>Completed</small>
+								</div>
+							</div>
+							<div class="progress-bar-track">
+								<div id="peer-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+							</div>
+						</div>
+
+						<!-- FILTER & SEARCH BAR -->
+						<div class="roster-toolbar">
+							<div class="filter-tabs" id="roster-filter-tabs">
+								<button class="filter-button active" type="button" data-filter="all">
+									All Classmates <span id="count-all-students">62</span>
+								</button>
+								<button class="filter-button" type="button" data-filter="pending">
+									Pending Feedback <span id="count-pending-students">62</span>
+								</button>
+								<button class="filter-button" type="button" data-filter="completed">
+									Feedback Given <span id="count-completed-students">0</span>
+								</button>
+							</div>
+
+							<div class="search-box">
+								<span aria-hidden="true">🔍</span>
+								<input id="search-students" type="search" placeholder="Search by name or roll no (e.g. CS-112, Aarav)..." aria-label="Search students" />
+							</div>
+						</div>
+
+						<!-- CLASSMATES GRID -->
+						<div id="students-grid" class="students-grid" aria-live="polite">
+							<!-- Student cards injected by JS -->
+						</div>
+
+						<div id="students-empty" class="empty-state" hidden>
+							<span class="empty-mark" aria-hidden="true">🔍</span>
+							<h3>No matching students found</h3>
+							<p>Try searching with another name or roll number.</p>
+						</div>
+					</section>
+
+					<!-- VIEW 2: MY GIVEN REVIEWS (STUDENT SUBMISSIONS) -->
+					<section id="view-my-reviews" class="workspace-view" hidden>
+						<div class="page-heading">
+							<div>
+								<span class="eyebrow">YOUR SUBMISSIONS</span>
+								<h1>My Given Peer Reviews</h1>
+								<p>All peer ratings and feedback comments you have submitted to MongoDB for your classmates.</p>
+							</div>
+						</div>
+
+						<div id="my-reviews-list" class="reviews-feed">
+							<!-- Injected by JS -->
+						</div>
+
+						<div id="my-reviews-empty" class="empty-state" hidden>
+							<span class="empty-mark" aria-hidden="true">📝</span>
+							<h3>No peer feedback submitted yet</h3>
+							<p>Choose any classmate from the roster to submit your first feedback!</p>
+							<button id="go-to-roster-btn" class="button button-primary" type="button">Go to Class Roster</button>
+						</div>
+					</section>
+
+					<!-- VIEW 3: CLASS ANALYTICS (ADMIN ONLY) -->
+					<section id="view-admin-analytics" class="workspace-view" hidden>
+						<div class="page-heading">
+							<div>
+								<span class="eyebrow">FACULTY & ADMIN DASHBOARD</span>
+								<h1>Class Peer Feedback Analytics</h1>
+							</div>
+						</div>
+
+						<div class="admin-table-card ai-summary-card">
+							<div class="ai-summary-header">
+								<div>
+									<h3>AI Class Summary</h3>
+									<p>AI-generated themes and rating trends to support admin review. Verify insights against the original submissions; do not use this summary alone to grade students.</p>
+									<p class="field-hint">Anonymized comments and ratings are sent to Gemini to generate the summary.</p>
+								</div>
+								<button id="generate-ai-summary-btn" class="button button-primary" type="button">Generate Summary</button>
+							</div>
+							<div id="ai-summary-result" class="ai-summary-result" role="status" aria-live="polite" hidden></div>
+						</div>
+
+						<!-- KPI CARDS -->
+						<div class="stats-grid">
+							<article class="stat-card">
+								<span class="stat-label">TOTAL CLASS ROSTER</span>
+								<strong id="kpi-total-students">62</strong>
+								<span class="stat-caption">Registered classmates</span>
+								<span class="stat-icon stat-icon-green" aria-hidden="true">👥</span>
+							</article>
+							<article class="stat-card">
+								<span class="stat-label">TOTAL FEEDBACKS IN MONGODB</span>
+								<strong id="kpi-total-feedbacks">0</strong>
+								<span class="stat-caption">Submitted peer reviews</span>
+								<span class="stat-icon stat-icon-blue" aria-hidden="true">📝</span>
+							</article>
+							<article class="stat-card">
+								<span class="stat-label">CLASS PEER AVERAGE</span>
+								<strong id="kpi-class-avg">0.0 / 5.0</strong>
+								<span class="stat-caption">Overall average rating</span>
+								<span class="stat-icon stat-icon-yellow" aria-hidden="true">★</span>
+							</article>
+							<article class="stat-card">
+								<span class="stat-label">STUDENTS EVALUATED</span>
+								<strong id="kpi-evaluated-students">0 / 62</strong>
+								<span class="stat-caption">Received at least 1 review</span>
+								<span class="stat-icon stat-icon-green" aria-hidden="true">✓</span>
+							</article>
+						</div>
+
+						<!-- ANALYTICS TABLE -->
+						<div class="admin-table-card">
+							<div class="table-header-toolbar">
+								<div>
+									<h3>Student Performance Roster</h3>
+									<p>Ranked ratings across all 5 evaluation criteria from 1 to 5.</p>
+								</div>
+								<div class="search-box">
+									<span aria-hidden="true">🔍</span>
+									<input id="search-analytics" type="search" placeholder="Filter student..." />
+								</div>
+							</div>
+
+							<div class="table-responsive">
+								<table class="analytics-table">
+									<thead>
+										<tr>
+											<th>Roll No</th>
+											<th>Student Name</th>
+											<th>Section</th>
+											<th>Reviews</th>
+											<th>Teamwork (1-5)</th>
+											<th>Comm. (1-5)</th>
+											<th>Punctuality (1-5)</th>
+											<th>Tech Skills (1-5)</th>
+											<th>Leadership (1-5)</th>
+											<th>Overall Avg</th>
+											<th>Action</th>
+										</tr>
+									</thead>
+									<tbody id="analytics-table-body">
+										<!-- Injected by JS -->
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</section>
+
+					<!-- VIEW 4: ADMIN ALL PEER FEEDBACKS FEED (ADMIN ONLY) -->
+					<section id="view-admin-all-feedbacks" class="workspace-view" hidden>
+						<div class="page-heading">
+							<div>
+								<span class="eyebrow">ADMIN AUDIT TRAIL</span>
+								<h1>All Peer Feedback Submissions</h1>
+								<p>Detailed log of every peer review submitted in the system with full criteria breakdown and student comments.</p>
+							</div>
+						</div>
+
+						<div class="roster-toolbar">
+							<div class="search-box" style="width: 280px;">
+								<span aria-hidden="true">🔍</span>
+								<input id="search-admin-feedbacks" type="search" placeholder="Search by student, reviewer, or comments..." />
+							</div>
+							<div id="admin-filter-status" class="filter-tabs">
+								<button class="filter-button active" type="button" data-admin-filter="all">All</button>
+								<button class="filter-button" type="button" data-admin-filter="submitted">Submitted</button>
+								<button class="filter-button" type="button" data-admin-filter="reviewed">Reviewed</button>
+							</div>
+							<button id="clear-peer-feedback-btn" class="button button-danger" type="button">Clear All Reviews</button>
+						</div>
+
+						<div id="admin-feedbacks-list" class="reviews-feed">
+							<!-- Injected by JS -->
+						</div>
+					</section>
+
+					<!-- VIEW 5: COURSE FEEDBACK (PRESERVED GENERAL FEEDBACK) -->
+					<section id="view-course-feedback" class="workspace-view" hidden>
+						<div class="page-heading">
+							<div>
+								<span class="eyebrow">GENERAL COURSE OPINIONS</span>
+								<h1 id="course-welcome-title">Course & Subject Feedback</h1>
+								<p id="course-welcome-copy">Share feedback regarding courses, curriculum, teaching, and materials.</p>
+							</div>
+							<button id="new-course-feedback-btn" class="button button-primary" type="button">
+								<span aria-hidden="true">＋</span> New course feedback
+							</button>
+						</div>
+
+						<div id="course-composer" class="composer-panel" hidden>
+							<div class="section-heading">
+								<div>
+									<span class="eyebrow">SUBMIT COURSE OPINION</span>
+									<h2>Course Feedback Form</h2>
+								</div>
+								<button id="close-course-composer" class="icon-button" type="button" aria-label="Close form">×</button>
+							</div>
+							<form id="course-feedback-form" class="feedback-form">
+								<label class="field">
+									<span>Course or subject</span>
+									<input id="course" type="text" maxlength="100" placeholder="e.g. Web Development with AI Lab" required />
+								</label>
+								<label class="field">
+									<span>Instructor</span>
+									<input id="instructor" type="text" maxlength="100" placeholder="e.g. Prof. Sharma" required />
+								</label>
+								<label class="field">
+									<span>Topic</span>
+									<select id="category" required>
+										<option value="">Choose a topic</option>
+										<option>Teaching</option>
+										<option>Course materials</option>
+										<option>Assignments</option>
+										<option>Class environment</option>
+										<option>Other</option>
+									</select>
+								</label>
+								<fieldset class="rating-field">
+									<legend>Course Rating (1 to 5)</legend>
+									<div class="rating-options">
+										<label><input type="radio" name="course-rating" value="1" required /><span>1</span></label>
+										<label><input type="radio" name="course-rating" value="2" /><span>2</span></label>
+										<label><input type="radio" name="course-rating" value="3" /><span>3</span></label>
+										<label><input type="radio" name="course-rating" value="4" /><span>4</span></label>
+										<label><input type="radio" name="course-rating" value="5" /><span>5</span></label>
+									</div>
+								</fieldset>
+								<label class="field field-full">
+									<span>Feedback remarks</span>
+									<textarea id="comment" rows="3" maxlength="2000" placeholder="Describe your experience with this course..." required></textarea>
+								</label>
+								<div class="form-actions field-full">
+									<p id="course-message" class="form-message" role="status" aria-live="polite"></p>
+									<button id="course-submit-btn" class="button button-primary" type="submit">Submit Course Feedback</button>
+								</div>
+							</form>
+						</div>
+
+						<div class="filter-row">
+							<span id="course-results-count" class="results-count">Loading course feedback...</span>
+						</div>
+						<div id="course-feedback-list" class="feedback-list"></div>
+					</section>
+				</div>
+			</section>
+		</main>
+
+		<!-- MODAL: GIVE PEER FEEDBACK (4-5 CRITERIA, 1 TO 5 SCALE) -->
+		<div id="peer-modal" class="modal-backdrop" hidden>
+			<div class="modal-dialog" role="dialog" aria-labelledby="modal-student-name" aria-modal="true">
+				<div class="modal-header">
+					<div class="modal-student-profile">
+						<span id="modal-student-avatar" class="modal-avatar">CS</span>
+						<div>
+							<div class="modal-eyebrow">EVALUATING CLASSMATE</div>
+							<h2 id="modal-student-name">Student Name</h2>
+							<div class="modal-student-meta">
+								<span id="modal-student-roll" class="roll-pill">CS-101</span>
+								<span id="modal-student-section">P</span>
+								<span>·</span>
+								<span id="modal-student-email">email@college.edu</span>
+							</div>
+						</div>
+					</div>
+					<button id="modal-close-btn" class="modal-close" type="button" aria-label="Close modal">✕</button>
+				</div>
+
+				<form id="peer-feedback-form" class="modal-body">
+					<input type="hidden" id="modal-target-roll" value="" />
+
+					<div class="criteria-intro">
+						<p>Please rate this student objectively from <strong>1 (Needs Improvement)</strong> to <strong>5 (Excellent)</strong> across all 5 criteria:</p>
+					</div>
+
+					<div class="criteria-list">
+						<!-- Criterion 1: Teamwork & Collaboration -->
+						<div class="criterion-card" data-key="teamwork">
+							<div class="criterion-header">
+								<div class="criterion-title">
+									<span class="criterion-num">1</span>
+									<div>
+										<strong>Teamwork & Collaboration</strong>
+										<p>Active participation in group tasks, supporting teammates, and sharing responsibilities.</p>
+									</div>
+								</div>
+								<span class="criterion-score-badge" id="badge-teamwork">Select (1-5)</span>
+							</div>
+							<div class="rating-bar" role="radiogroup" aria-label="Teamwork rating">
+								<button type="button" class="rate-btn" data-criterion="teamwork" data-value="1">1<small>Poor</small></button>
+								<button type="button" class="rate-btn" data-criterion="teamwork" data-value="2">2<small>Fair</small></button>
+								<button type="button" class="rate-btn" data-criterion="teamwork" data-value="3">3<small>Good</small></button>
+								<button type="button" class="rate-btn" data-criterion="teamwork" data-value="4">4<small>Very Good</small></button>
+								<button type="button" class="rate-btn" data-criterion="teamwork" data-value="5">5<small>Excellent</small></button>
+							</div>
+						</div>
+
+						<!-- Criterion 2: Communication & Respect -->
+						<div class="criterion-card" data-key="communication">
+							<div class="criterion-header">
+								<div class="criterion-title">
+									<span class="criterion-num">2</span>
+									<div>
+										<strong>Communication & Respect</strong>
+										<p>Clarity in exchanging thoughts, attentive listening skills, and respectful professional demeanor.</p>
+									</div>
+								</div>
+								<span class="criterion-score-badge" id="badge-communication">Select (1-5)</span>
+							</div>
+							<div class="rating-bar" role="radiogroup" aria-label="Communication rating">
+								<button type="button" class="rate-btn" data-criterion="communication" data-value="1">1<small>Poor</small></button>
+								<button type="button" class="rate-btn" data-criterion="communication" data-value="2">2<small>Fair</small></button>
+								<button type="button" class="rate-btn" data-criterion="communication" data-value="3">3<small>Good</small></button>
+								<button type="button" class="rate-btn" data-criterion="communication" data-value="4">4<small>Very Good</small></button>
+								<button type="button" class="rate-btn" data-criterion="communication" data-value="5">5<small>Excellent</small></button>
+							</div>
+						</div>
+
+						<!-- Criterion 3: Punctuality & Reliability -->
+						<div class="criterion-card" data-key="punctuality">
+							<div class="criterion-header">
+								<div class="criterion-title">
+									<span class="criterion-num">3</span>
+									<div>
+										<strong>Punctuality & Reliability</strong>
+										<p>Meeting submission deadlines, attending group work on time, and delivering on promises.</p>
+									</div>
+								</div>
+								<span class="criterion-score-badge" id="badge-punctuality">Select (1-5)</span>
+							</div>
+							<div class="rating-bar" role="radiogroup" aria-label="Punctuality rating">
+								<button type="button" class="rate-btn" data-criterion="punctuality" data-value="1">1<small>Poor</small></button>
+								<button type="button" class="rate-btn" data-criterion="punctuality" data-value="2">2<small>Fair</small></button>
+								<button type="button" class="rate-btn" data-criterion="punctuality" data-value="3">3<small>Good</small></button>
+								<button type="button" class="rate-btn" data-criterion="punctuality" data-value="4">4<small>Very Good</small></button>
+								<button type="button" class="rate-btn" data-criterion="punctuality" data-value="5">5<small>Excellent</small></button>
+							</div>
+						</div>
+
+						<!-- Criterion 4: Technical & Problem Solving Skills -->
+						<div class="criterion-card" data-key="technical">
+							<div class="criterion-header">
+								<div class="criterion-title">
+									<span class="criterion-num">4</span>
+									<div>
+										<strong>Technical & Problem Solving</strong>
+										<p>Contribution to lab assignments, technical knowledge, code quality, and solving blockers.</p>
+									</div>
+								</div>
+								<span class="criterion-score-badge" id="badge-technical">Select (1-5)</span>
+							</div>
+							<div class="rating-bar" role="radiogroup" aria-label="Technical skills rating">
+								<button type="button" class="rate-btn" data-criterion="technical" data-value="1">1<small>Poor</small></button>
+								<button type="button" class="rate-btn" data-criterion="technical" data-value="2">2<small>Fair</small></button>
+								<button type="button" class="rate-btn" data-criterion="technical" data-value="3">3<small>Good</small></button>
+								<button type="button" class="rate-btn" data-criterion="technical" data-value="4">4<small>Very Good</small></button>
+								<button type="button" class="rate-btn" data-criterion="technical" data-value="5">5<small>Excellent</small></button>
+							</div>
+						</div>
+
+						<!-- Criterion 5: Leadership & Initiative -->
+						<div class="criterion-card" data-key="leadership">
+							<div class="criterion-header">
+								<div class="criterion-title">
+									<span class="criterion-num">5</span>
+									<div>
+										<strong>Leadership & Initiative</strong>
+										<p>Proactively taking ownership, guiding discussions, and motivating peers in challenging tasks.</p>
+									</div>
+								</div>
+								<span class="criterion-score-badge" id="badge-leadership">Select (1-5)</span>
+							</div>
+							<div class="rating-bar" role="radiogroup" aria-label="Leadership rating">
+								<button type="button" class="rate-btn" data-criterion="leadership" data-value="1">1<small>Poor</small></button>
+								<button type="button" class="rate-btn" data-criterion="leadership" data-value="2">2<small>Fair</small></button>
+								<button type="button" class="rate-btn" data-criterion="leadership" data-value="3">3<small>Good</small></button>
+								<button type="button" class="rate-btn" data-criterion="leadership" data-value="4">4<small>Very Good</small></button>
+								<button type="button" class="rate-btn" data-criterion="leadership" data-value="5">5<small>Excellent</small></button>
+							</div>
+						</div>
+					</div>
+
+					<!-- OVERALL AVERAGE SCORE BANNER -->
+					<div class="overall-score-preview">
+						<div class="score-left">
+							<span>Calculated Peer Score:</span>
+							<strong id="modal-average-score">0.0 / 5.0</strong>
+						</div>
+						<div class="score-pill" id="modal-score-descriptor">Select ratings above</div>
+					</div>
+
+					<!-- CONSTRUCTIVE COMMENTS -->
+					<label class="field field-full" style="margin-top: 16px;">
+						<span>Constructive Remarks / Comments for Classmate</span>
+						<textarea id="modal-comment" rows="3" maxlength="2000" placeholder="Mention specific strengths, positive contributions, or constructive suggestions for your classmate..."></textarea>
+						<small class="field-hint">Stored securely and visible to faculty administrators.</small>
+					</label>
+
+					<div class="modal-footer">
+						<p id="modal-error-msg" class="form-message is-error"></p>
+						<div class="modal-actions">
+							<button id="modal-cancel-btn" type="button" class="button button-quiet">Cancel</button>
+							<button id="modal-submit-btn" type="submit" class="button button-primary">
+								Submit Feedback <span aria-hidden="true">→</span>
+							</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- MODAL: VIEW SPECIFIC STUDENT REVIEWS (FOR ADMIN & AUDIT) -->
+		<div id="student-detail-modal" class="modal-backdrop" hidden>
+			<div class="modal-dialog modal-dialog-lg" role="dialog" aria-modal="true">
+				<div class="modal-header">
+					<div class="modal-student-profile">
+						<span id="detail-student-avatar" class="modal-avatar">CS</span>
+						<div>
+							<div class="modal-eyebrow">STUDENT PERFORMANCE AUDIT</div>
+							<h2 id="detail-student-name">Student Name</h2>
+							<div class="modal-student-meta">
+								<span id="detail-student-roll" class="roll-pill">CS-101</span>
+								<span id="detail-student-section">P</span>
+							</div>
+						</div>
+					</div>
+					<button id="detail-modal-close" class="modal-close" type="button" aria-label="Close">✕</button>
+				</div>
+				<div class="modal-body">
+					<div id="detail-reviews-container" class="reviews-feed">
+						<!-- Injected by JS -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
