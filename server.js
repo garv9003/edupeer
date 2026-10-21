@@ -41,8 +41,13 @@ const sessionCookie = "coursevoice_session";
 const sessionDurationSeconds = 60 * 60 * 24 * 7;
 const allowedCategories = new Set(["Teaching", "Course materials", "Assignments", "Class environment", "Other"]);
 const allowedStatuses = new Set(["new", "reviewed", "resolved", "submitted", "flagged", "approved"]);
-const emailPattern = /^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
 const aiSummaryLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 5, standardHeaders: "draft-7", legacyHeaders: false });
+const adminEmails = new Set(
+  (process.env.ADMIN_EMAILS || "admin@college.edu,admin@school.edu,faculty@college.edu")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+);
 
 const app = express();
 const client = new MongoClient(mongoUri);
@@ -122,7 +127,8 @@ app.post("/api/auth/signup", async (request, response) => {
   if (password.length < 6 || password.length > 72) return sendError(response, 400, "Password must be at least 6 characters.");
 
   try {
-    const user = { fullName, email, passwordHash: await bcrypt.hash(password, 12), role: "student", createdAt: new Date() };
+    const role = adminEmails.has(email) ? "admin" : "student";
+    const user = { fullName, email, passwordHash: await bcrypt.hash(password, 12), role, createdAt: new Date() };
     const result = await users.insertOne(user);
     user._id = result.insertedId;
     createSession(response, user);
@@ -143,7 +149,7 @@ app.post("/api/auth/signin", async (request, response) => {
     const matches = user ? await bcrypt.compare(password, user.passwordHash) : false;
     if (!matches) return sendError(response, 401, "Email or password is incorrect.");
 
-    const updatedRole = user.role === "admin" ? "admin" : "student";
+    const updatedRole = adminEmails.has(email) ? "admin" : (user.role === "admin" ? "admin" : "student");
     if (updatedRole !== user.role) {
       await users.updateOne({ _id: user._id }, { $set: { role: updatedRole } });
       user.role = updatedRole;
@@ -719,6 +725,20 @@ async function seedInitialData() {
     }
   })));
 
+  // Ensure default admin account exists
+  const defaultAdmin = await users.findOne({ email: "admin@college.edu" });
+  if (!defaultAdmin) {
+    const defaultHash = await bcrypt.hash("Admin@123", 12);
+    await users.insertOne({
+      fullName: "System Administrator",
+      email: "admin@college.edu",
+      passwordHash: defaultHash,
+      role: "admin",
+      createdAt: new Date()
+    });
+  } else if (defaultAdmin.role !== "admin") {
+    await users.updateOne({ _id: defaultAdmin._id }, { $set: { role: "admin" } });
+  }
 }
 
 async function start() {
